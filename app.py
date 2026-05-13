@@ -1,13 +1,13 @@
+# app.py
+
 import streamlit as st
-from PIL import Image
-import cv2
-import numpy as np
+from PIL import Image, ImageEnhance, ImageFilter
 from io import BytesIO
 
 st.set_page_config(page_title="AI Image Enhancer", page_icon="✨")
 
 st.title("✨ AI Image Enhancer")
-st.write("Upload a blurry or dark image and enhance it automatically.")
+st.write("Upload an image and enhance brightness, sharpness, and quality.")
 
 uploaded_file = st.file_uploader(
     "Upload Image",
@@ -19,49 +19,27 @@ uploaded_file = st.file_uploader(
 # -----------------------------------
 def enhance_image(image):
 
-    # Convert PIL to OpenCV
-    img = np.array(image)
+    # Increase sharpness
+    sharp_enhancer = ImageEnhance.Sharpness(image)
+    image = sharp_enhancer.enhance(2.0)
 
-    # Convert RGB to BGR
-    img = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)
+    # Increase contrast
+    contrast_enhancer = ImageEnhance.Contrast(image)
+    image = contrast_enhancer.enhance(1.5)
 
-    # Denoise image
-    denoise = cv2.fastNlMeansDenoisingColored(
-        img,
-        None,
-        10,
-        10,
-        7,
-        21
-    )
+    # Increase brightness
+    brightness_enhancer = ImageEnhance.Brightness(image)
+    image = brightness_enhancer.enhance(1.2)
 
-    # Sharpen image
-    kernel = np.array([
-        [-1, -1, -1],
-        [-1,  9, -1],
-        [-1, -1, -1]
-    ])
+    # Smooth image slightly
+    image = image.filter(ImageFilter.SMOOTH)
 
-    sharpened = cv2.filter2D(denoise, -1, kernel)
-
-    # Improve brightness and contrast
-    enhanced = cv2.convertScaleAbs(
-        sharpened,
-        alpha=1.2,   # Contrast
-        beta=20      # Brightness
-    )
-
-    # Convert back to RGB
-    enhanced = cv2.cvtColor(enhanced, cv2.COLOR_BGR2RGB)
-
-    return enhanced
+    return image
 
 # -----------------------------------
 # DOWNLOAD FUNCTION
 # -----------------------------------
-def convert_image(img_array):
-
-    image = Image.fromarray(img_array)
+def convert_image(image):
 
     buffer = BytesIO()
 
